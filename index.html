@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        // Объявляем массивы слов для каждого уровня сложности
+const words = {
+  easy: ["cat", "dog", "bird", "fish", "lion", "bear", "frog", "wolf", "duck", "ant"],
+  medium: ["apple", "grape", "lemon", "peach", "melon", "plums", "apricot", "banana", "cherry", "orange"],
+  hard: ["elephant", "giraffe", "dolphin", "kangaroo", "alligator", "chimpanzee", "crocodile", "porcupine", "rhinoceros", "hippopotamus"]
+};
+
+
+// Функция для выбора случайного слова
+function getRandomWord(wordsList) {
+  return wordsList[Math.floor(Math.random() * wordsList.length)];
+}
+
+// Форматирование времени в виде "00:01:30"
+function formatTime(seconds) {
+  const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const secs = String(Math.floor(seconds % 60)).padStart(2, "0");
+  return `${mins}:${secs}`;
+}
+
+// Функция для игры в один раунд
+function playRound(word) {
+  let maskedWord = "*".repeat(word.length);
+  let attempts = 3;
+  let startTime = new Date();
+  
+  while (attempts > 0) {
+    let guess = prompt(`Слово: ${maskedWord} (${word.length} букв)\nУ вас ${attempts} жизни. Введите букву или слово:`).toLowerCase();
+
+    // Проверка на пустой ввод
+    if (!guess) {
+      alert("Вы ничего не ввели! Пожалуйста, введите букву или слово.");
+      continue;
+    }
+
+    // Проверка на кириллицу, специальные символы или цифры
+    if (/[^a-z]/.test(guess)) {
+      alert("Используйте только латинские буквы.");
+      continue;
+    }
+
+    // Угадывание слова
+    if (guess.length > 1) {
+      if (guess === word) {
+        let endTime = new Date();
+        let timeTaken = (endTime - startTime) / 1000;
+        alert(`Поздравляем! Вы угадали слово: ${word} за ${timeTaken} секунд.`);
+        return { word, guessed: true, time: timeTaken };
+      } else {
+        attempts--;
+        alert("Неверно! Попробуйте снова.");
+      }
+    } 
+    // Угадывание буквы
+    else {
+      if (word.includes(guess)) {
+        let newMaskedWord = "";
+        for (let i = 0; i < word.length; i++) {
+          newMaskedWord += word[i] === guess ? guess : maskedWord[i];
+        }
+        maskedWord = newMaskedWord;
+        alert(`Правильно! Текущая подсказка: ${maskedWord}`);
+        if (maskedWord === word) {
+          let endTime = new Date();
+          let timeTaken = (endTime - startTime) / 1000;
+          alert(`Поздравляем! Вы угадали слово: ${word} за ${timeTaken} секунд.`);
+          return { word, guessed: true, time: timeTaken };
+        }
+      } else {
+        attempts--;
+        alert("Неправильная буква! Попробуйте снова.");
+      }
+    }
+  }
+
+ // Время даже в случае проигрыша
+ let endTime = new Date();
+  let timeTaken = (endTime - startTime) / 1000;
+  alert(`Вы проиграли. Загаданное слово было: ${word}. Время: ${formatTime(timeTaken)}.`);
+  return { word, guessed: false, time: timeTaken };
+}
+
+// Вывод рейтинга по результатам раундов
+function displayRating(rounds) {
+  // Сортируем сначала по угадыванию, затем по времени
+  rounds.sort((a, b) => {
+    if (a.guessed !== b.guessed) {
+      return b.guessed - a.guessed; // Угаданные сначала
+    }
+    return a.time - b.time; // Время от меньшего к большему
+  });
+
+  // Форматируем и выводим рейтинг
+  let rating = "Рейтинг:\nСлово       | Угадал | Длительность\n";
+  for (let round of rounds) {
+    rating += `${round.word.padEnd(10)} | ${round.guessed ? "да" : "нет"}   | ${formatTime(round.time)}\n`;
+  }
+  alert(rating);
+}
+
+// Подведение итогов
+function displayFinalSummary(difficultyText, rounds) {
+  let wins = rounds.filter(r => r.guessed).length;
+  let losses = rounds.length - wins;
+  alert(`Итоги игры:\nУровень сложности: ${difficultyText}\nПобеды: ${wins}\nПоражения: ${losses}`);
+  displayRating(rounds);
+
+  if (wins > losses) {
+    alert("Молодец!");
+  } else {
+    alert("Молодец, в следующий раз получится лучше!");
+  }
+}
+
+// Основная функция игры
+function startGame() {
+  let playAgain = true;
+  let difficulty;
+  let difficultyText;
+  let rounds = [];
+
+
+// Выбор уровня сложности
+while (!difficulty) {
+    if (confirm('Хотите сыграть?')){
+        difficulty = prompt("Выберите уровень сложности: 1-лёгкий, 2-средний или 3-сложный.");
+      if (!["1", "2", "3"].includes(difficulty)) {
+        alert("Пожалуйста, выберите правильный уровень сложности.");
+        difficulty = null;
+      }
+    } else{
+        alert("До встречи!");
+        return;   
+    }
+  }
+
+
+  // Подбираем нужный список слов
+  let wordsList;
+  switch (difficulty) {
+    case "1":
+      wordsList = words.easy;
+      difficultyText = 'лёгкий';
+      break;
+    case "2":
+      wordsList = words.medium;
+      difficultyText = 'средний';
+      break;
+    case "3":
+      wordsList = words.hard;
+      difficultyText = 'тяжёлый';
+      break;
+  }
+
+    // Играем раунды, пока есть слова
+    while (playAgain && wordsList.length > 0) {
+    let word = getRandomWord(wordsList);
+    let result = playRound(word);
+    rounds.push(result);
+
+    // Показ итогов текущего раунда
+    alert(`Итоги раунда:\nУровень сложности: ${difficultyText}\nПобеды: ${rounds.filter(r => r.guessed).length}\nПоражения: ${rounds.filter(r => !r.guessed).length}`);
+    displayRating(rounds);
+
+    playAgain = confirm("Хотите сыграть ещё раз?");
+    wordsList = wordsList.filter(w => w !== word);
+  }
+
+  // Итоги игры, если игрок закончил или слова закончились
+  displayFinalSummary(difficultyText, rounds);
+}
+
+// Запуск игры
+startGame();
+
+
+
+    </script>
+    
+</body>
+</html>
